@@ -27,6 +27,11 @@ export class HomeComponent {
     this.chats = Chats.filter(p=> p.toUserId == user.id && p.userId == "0" || p.userId == user.id && p.toUserId == "0");
   }
 
+  logout(){
+    localStorage.clear();
+    document.location.reload();
+  }
+
 }
 
 export class UserModel{
