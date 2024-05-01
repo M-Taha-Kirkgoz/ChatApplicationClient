@@ -4,6 +4,8 @@ import { UserModel } from '../../models/user.model';
 import { ChatModel } from '../../models/chat.model';
 import { HttpClient } from '@angular/common/http';
 
+import * as signalR from '@microsoft/signalr';
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -19,11 +21,27 @@ export class HomeComponent {
 
   user = new UserModel();
 
+  hub: signalR.HubConnection | undefined;
+
   constructor(
     private http: HttpClient
   ){
     this.user = JSON.parse(localStorage.getItem("accessToken") ?? ""); // Kendi kullanıcı bilgilerim.
     this.getUsers();
+
+    this.hub = new signalR.HubConnectionBuilder().withUrl("https://localhost:7211/chat-hub").build();
+
+    this.hub.start().then(() => {
+      console.log("Connection is started !");
+
+      this.hub?.invoke("Connect", this.user.id); // Server tarafındaki "ChatHub" sınıfının içerisindeki "Connect" methodunun çalışmasını tetikler.
+
+      this.hub?.on("Users", ( res: UserModel ) => {
+        
+        this.users.find(p => p.id == res.id)!.status = res.status;
+        
+      }); // Server tarafındaki "ChatHub" sınıfının içerisindeki "Connect" methodundan dönen cevabı "Users" ile dinlemeye başlar. (22. satır == Clients.All.SendAsync("Users", user);)
+    });
   }
 
   getUsers(){
